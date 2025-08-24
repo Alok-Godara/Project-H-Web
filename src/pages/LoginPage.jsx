@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Activity, ArrowLeft, Eye, EyeOff, Mail, Lock } from 'lucide-react';
 
+
 const LoginPage = ({ onLogin, onSignup, onBack, isLoading }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -34,7 +35,7 @@ const LoginPage = ({ onLogin, onSignup, onBack, isLoading }) => {
     try {
       await onLogin(email, password);
     } catch (error) {
-      setErrors({ password: 'Invalid email or password' , error});
+      setErrors({ password: 'Invalid email or password',error });
     }
   };
 

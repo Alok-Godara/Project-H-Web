@@ -1,7 +1,14 @@
 import React, { useState } from 'react';
 import { Activity, ArrowLeft, Eye, EyeOff, Mail, Lock, User, Stethoscope } from 'lucide-react';
 
-const SignupPage = ({ onSignup, onLogin, onBack, isLoading }) => {
+interface SignupPageProps {
+  onSignup: (name: string, email: string, password: string, specialty: string) => Promise<void>;
+  onLogin: () => void;
+  onBack: () => void;
+  isLoading: boolean;
+}
+
+const SignupPage: React.FC<SignupPageProps> = ({ onSignup, onLogin, onBack, isLoading }) => {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -11,7 +18,7 @@ const SignupPage = ({ onSignup, onLogin, onBack, isLoading }) => {
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [errors, setErrors] = useState({});
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   const specialties = [
     'Internal Medicine',
@@ -32,8 +39,8 @@ const SignupPage = ({ onSignup, onLogin, onBack, isLoading }) => {
   ];
 
   const validateForm = () => {
-    const newErrors = {};
-
+    const newErrors: Record<string, string> = {};
+    
     if (!formData.name.trim()) {
       newErrors.name = 'Full name is required';
     }
@@ -64,7 +71,7 @@ const SignupPage = ({ onSignup, onLogin, onBack, isLoading }) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!validateForm()) return;
@@ -72,11 +79,11 @@ const SignupPage = ({ onSignup, onLogin, onBack, isLoading }) => {
     try {
       await onSignup(formData.name, formData.email, formData.password, formData.specialty);
     } catch (error) {
-      setErrors({ email: 'An account with this email already exists', error });
+      setErrors({ email: 'An account with this email already exists' });
     }
   };
 
-  const handleInputChange = (field, value) => {
+  const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: '' }));

@@ -8,6 +8,7 @@ import Signup from "./pages/Signup.jsx";
 import Login from "./pages/Login.jsx";
 import LandingPage from "./pages/LandingPage.jsx";
 import CustomErrorPage from "./components/CustomErrorPage.jsx";
+import Dashboard from "./components/Dashboard.jsx";
 import React from "react";
 
 const router = createBrowserRouter([
@@ -24,11 +25,11 @@ const router = createBrowserRouter([
     element: <Signup />,
   },
   {
-    path: "/dashboard",
+    path: "/app",
     element: <App />,
     children: [
       {
-        path: "",
+        path: "dashboard",
         element: <Dashboard />,
       },
     ],

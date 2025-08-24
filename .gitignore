@@ -22,33 +22,3 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
-# Node modules
-node_modules/
-
-# Build output
-dist/
-build/
-
-# Log files
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# Environment variables
-.env
-.env.local
-.env.*.local
-
-# Editor and OS generated files
-.DS_Store
-Thumbs.db
-.vscode/
-*.sublime-project
-*.sublime-workspace
-
-# Testing
-coverage/
-
-# Vite specific
-.vite/
