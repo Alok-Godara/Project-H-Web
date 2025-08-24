@@ -4,10 +4,9 @@ import { Provider } from "react-redux";
 import store from "./store/store.js";
 import App from "./App.jsx";
 import "./index.css";
-import Signup from "./pages/Signup.jsx";
-import Login from "./pages/Login.jsx";
+import SignupPage from "./pages/SignupPage.jsx";
+import LoginPage from "./pages/LoginPage.jsx";
 import LandingPage from "./pages/LandingPage.jsx";
-import CustomErrorPage from "./components/CustomErrorPage.jsx";
 import Dashboard from "./components/Dashboard.jsx";
 import React from "react";
 
@@ -18,11 +17,11 @@ const router = createBrowserRouter([
   },
   {
     path: "/login",
-    element: <Login />,
+    element: <LoginPage />,
   },
   {
     path: "/signup",
-    element: <Signup />,
+    element: <SignupPage />,
   },
   {
     path: "/app",
@@ -33,7 +32,7 @@ const router = createBrowserRouter([
         element: <Dashboard />,
       },
     ],
-    errorElement: <CustomErrorPage />
+    // errorElement: <CustomErrorPage />
   },
 ]);
 

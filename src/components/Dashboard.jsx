@@ -1,8 +1,9 @@
 import React from 'react';
-import PatientList from './PatientList';
-import { Patient, Provider } from '../types';
 
-const Dashboard = ({ patients, onPatientSelect }) => {
+
+
+
+const Dashboard = () => {
   return (
     <div className="h-[calc(100vh-4rem)] bg-gradient-to-br from-blue-50 via-white to-indigo-50 relative overflow-hidden">
       {/* Background Pattern */}
@@ -21,7 +22,7 @@ const Dashboard = ({ patients, onPatientSelect }) => {
       {/* Centered Patient List */}
       <div className="h-full flex items-center justify-center p-8">
         <div className="w-full max-w-[700px] min-w-[550px] flex justify-center bg-white/80 backdrop-blur-sm border border-white/20 rounded-2xl shadow-xl">
-          <PatientList patients={patients} onPatientSelect={onPatientSelect} />
+          {/* <PatientList patients={patients} onPatientSelect={onPatientSelect} /> */}
         </div>
       </div>
     </div>

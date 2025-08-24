@@ -1,14 +1,7 @@
 import React, { useState } from 'react';
 import { Activity, ArrowLeft, Eye, EyeOff, Mail, Lock, User, Stethoscope } from 'lucide-react';
 
-interface SignupPageProps {
-  onSignup: (name: string, email: string, password: string, specialty: string) => Promise<void>;
-  onLogin: () => void;
-  onBack: () => void;
-  isLoading: boolean;
-}
-
-const SignupPage: React.FC<SignupPageProps> = ({ onSignup, onLogin, onBack, isLoading }) => {
+const SignupPage = ({ onSignup, onLogin, onBack, isLoading }) => {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -18,7 +11,7 @@ const SignupPage: React.FC<SignupPageProps> = ({ onSignup, onLogin, onBack, isLo
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [errors, setErrors] = useState({});
 
   const specialties = [
     'Internal Medicine',
@@ -39,7 +32,7 @@ const SignupPage: React.FC<SignupPageProps> = ({ onSignup, onLogin, onBack, isLo
   ];
 
   const validateForm = () => {
-    const newErrors: Record<string, string> = {};
+    const newErrors = {};
     
     if (!formData.name.trim()) {
       newErrors.name = 'Full name is required';
@@ -71,7 +64,7 @@ const SignupPage: React.FC<SignupPageProps> = ({ onSignup, onLogin, onBack, isLo
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     
     if (!validateForm()) return;
@@ -79,11 +72,11 @@ const SignupPage: React.FC<SignupPageProps> = ({ onSignup, onLogin, onBack, isLo
     try {
       await onSignup(formData.name, formData.email, formData.password, formData.specialty);
     } catch (error) {
-      setErrors({ email: 'An account with this email already exists' });
+      setErrors({ email: 'An account with this email already exists', error });
     }
   };
 
-  const handleInputChange = (field: string, value: string) => {
+  const handleInputChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: '' }));
