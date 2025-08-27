@@ -1,11 +1,9 @@
-import React from 'react';
-
-
+import PatientList from './PatientList';
 
 
 const Dashboard = () => {
   return (
-    <div className="h-[calc(100vh-4rem)] bg-gradient-to-br from-blue-50 via-white to-indigo-50 relative overflow-hidden">
+    <div className="h-[calc(100vh)] bg-gradient-to-br from-blue-50 via-white to-indigo-50 relative overflow-hidden">
       {/* Background Pattern */}
       <div className="absolute inset-0 opacity-5">
         <div className="absolute top-20 left-20 w-96 h-96 bg-blue-500 rounded-full blur-3xl"></div>
@@ -22,7 +20,7 @@ const Dashboard = () => {
       {/* Centered Patient List */}
       <div className="h-full flex items-center justify-center p-8">
         <div className="w-full max-w-[700px] min-w-[550px] flex justify-center bg-white/80 backdrop-blur-sm border border-white/20 rounded-2xl shadow-xl">
-          {/* <PatientList patients={patients} onPatientSelect={onPatientSelect} /> */}
+          <PatientList />
         </div>
       </div>
     </div>

@@ -1,17 +1,24 @@
-import React, { useState } from 'react';
+import React, {  useState } from 'react';
 import { Activity, ArrowLeft, Eye, EyeOff, Mail, Lock, User, Stethoscope } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import authService from '../supabase/auth';
 
-const SignupPage = ({ onSignup, onLogin, onBack, isLoading }) => {
+const SignupPage = () => {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
+    phone: '',
     password: '',
     confirmPassword: '',
     specialty: ''
   });
+  const [specialtySuggestions, setSpecialtySuggestions] = useState([]);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [errors, setErrors] = useState({});
+  const [isLoading, setIsLoading] = useState(false);
+
+  const navigate = useNavigate();
 
   const specialties = [
     'Internal Medicine',
@@ -30,6 +37,16 @@ const SignupPage = ({ onSignup, onLogin, onBack, isLoading }) => {
     'Surgery',
     'Other'
   ];
+
+  const handleSpecialtyInput = (value) => {
+    handleInputChange('specialty', value);
+    if (value.length > 0) {
+      const filtered = specialties.filter(s => s.toLowerCase().includes(value.toLowerCase()));
+      setSpecialtySuggestions(filtered);
+    } else {
+      setSpecialtySuggestions([]);
+    }
+  };
 
   const validateForm = () => {
     const newErrors = {};
@@ -57,11 +74,24 @@ const SignupPage = ({ onSignup, onLogin, onBack, isLoading }) => {
     }
     
     if (!formData.specialty) {
-      newErrors.specialty = 'Please select your specialty';
+      newErrors.specialty = 'Please enter your specialty';
+    }
+
+    if (!formData.phone) {
+      newErrors.phone = 'Phone number is required';
+    } else if (!/^\+?\d{10,15}$/.test(formData.phone)) {
+      newErrors.phone = 'Please enter a valid phone number';
     }
     
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
+  };
+  
+  const handleInputChange = (field, value) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+    if (errors[field]) {
+      setErrors(prev => ({ ...prev, [field]: '' }));
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -69,19 +99,24 @@ const SignupPage = ({ onSignup, onLogin, onBack, isLoading }) => {
     
     if (!validateForm()) return;
     
+    setIsLoading(true);
     try {
-      await onSignup(formData.name, formData.email, formData.password, formData.specialty);
+      const {data} = await authService.createAccountService({
+        email: formData.email,
+        password: formData.password,
+        name: formData.name,
+        phone: formData.phone,
+        specialty: formData.specialty,
+      });
+      console.log(data);
+      navigate("/dashboard");
     } catch (error) {
       setErrors({ email: 'An account with this email already exists', error });
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const handleInputChange = (field, value) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-    if (errors[field]) {
-      setErrors(prev => ({ ...prev, [field]: '' }));
-    }
-  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex items-center justify-center p-6">
@@ -94,7 +129,7 @@ const SignupPage = ({ onSignup, onLogin, onBack, isLoading }) => {
       <div className="w-full max-w-md relative">
         {/* Back Button */}
         <button
-          onClick={onBack}
+          onClick={() => navigate("/")}
           className="flex items-center space-x-2 text-gray-600 hover:text-gray-900 mb-8 transition-colors"
         >
           <ArrowLeft size={20} />
@@ -139,6 +174,7 @@ const SignupPage = ({ onSignup, onLogin, onBack, isLoading }) => {
               )}
             </div>
 
+
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
                 Email Address
@@ -162,26 +198,59 @@ const SignupPage = ({ onSignup, onLogin, onBack, isLoading }) => {
             </div>
 
             <div>
+              <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">
+                Phone Number
+              </label>
+              <div className="relative">
+                <input
+                  id="phone"
+                  type="tel"
+                  value={formData.phone}
+                  onChange={(e) => handleInputChange('phone', e.target.value)}
+                  className={`w-full pl-4 pr-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${
+                    errors.phone ? 'border-red-300' : 'border-gray-300'
+                  }`}
+                  placeholder="e.g. +1234567890"
+                />
+              </div>
+              {errors.phone && (
+                <p className="mt-1 text-sm text-red-600">{errors.phone}</p>
+              )}
+            </div>
+
+            <div>
               <label htmlFor="specialty" className="block text-sm font-medium text-gray-700 mb-2">
                 Medical Specialty
               </label>
               <div className="relative">
                 <Stethoscope className="absolute left-3 top-3 text-gray-400" size={20} />
-                <select
+                <input
                   id="specialty"
+                  type="text"
+                  autoComplete="off"
                   value={formData.specialty}
-                  onChange={(e) => handleInputChange('specialty', e.target.value)}
-                  className={`w-full pl-10 pr-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors appearance-none bg-white ${
+                  onChange={(e) => handleSpecialtyInput(e.target.value)}
+                  className={`w-full pl-10 pr-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors ${
                     errors.specialty ? 'border-red-300' : 'border-gray-300'
                   }`}
-                >
-                  <option value="">Select your specialty</option>
-                  {specialties.map((specialty) => (
-                    <option key={specialty} value={specialty}>
-                      {specialty}
-                    </option>
-                  ))}
-                </select>
+                  placeholder="Type your specialty"
+                />
+                {specialtySuggestions.length > 0 && (
+                  <ul className="absolute z-10 left-0 right-0 bg-white border border-gray-200 rounded-xl mt-1 max-h-40 overflow-y-auto shadow-lg">
+                    {specialtySuggestions.map((s) => (
+                      <li
+                        key={s}
+                        className="px-4 py-2 hover:bg-blue-100 cursor-pointer"
+                        onClick={() => {
+                          handleInputChange('specialty', s);
+                          setSpecialtySuggestions([]);
+                        }}
+                      >
+                        {s}
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </div>
               {errors.specialty && (
                 <p className="mt-1 text-sm text-red-600">{errors.specialty}</p>
@@ -282,7 +351,7 @@ const SignupPage = ({ onSignup, onLogin, onBack, isLoading }) => {
             <p className="text-gray-600">
               Already have an account?{' '}
               <button
-                onClick={onLogin}
+                onClick={() => navigate("/login")}
                 className="text-blue-600 hover:text-blue-700 font-medium"
               >
                 Sign in

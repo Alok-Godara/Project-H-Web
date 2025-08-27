@@ -9,6 +9,9 @@ import LoginPage from "./pages/LoginPage.jsx";
 import LandingPage from "./pages/LandingPage.jsx";
 import Dashboard from "./components/Dashboard.jsx";
 import React from "react";
+import PatientPortal from "./components/PatientPortal.jsx";
+// import { useParams } from "react-router-dom";
+
 
 const router = createBrowserRouter([
   {
@@ -24,15 +27,19 @@ const router = createBrowserRouter([
     element: <SignupPage />,
   },
   {
-    path: "/app",
-    element: <App />,
+    path: "/dashboard",
+    element: <App />, 
     children: [
       {
-        path: "dashboard",
-        element: <Dashboard />,
+        path: "",
+        element: <Dashboard />, 
       },
     ],
     // errorElement: <CustomErrorPage />
+  },
+  {
+    path: "/patient/:patientId",
+    element: <PatientPortal />,
   },
 ]);
 

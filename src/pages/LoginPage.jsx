@@ -1,12 +1,18 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Activity, ArrowLeft, Eye, EyeOff, Mail, Lock } from 'lucide-react';
+import authService from '../supabase/auth';
 
 
-const LoginPage = ({ onLogin, onSignup, onBack, isLoading }) => {
+const LoginPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState({});
+
+  const [isLoading, setIsLoading] = useState(false);
+
+  const navigate = useNavigate();
 
   const validateForm = () => {
     const newErrors = {};
@@ -31,11 +37,16 @@ const LoginPage = ({ onLogin, onSignup, onBack, isLoading }) => {
     e.preventDefault();
     
     if (!validateForm()) return;
-    
+
+    setIsLoading(true);
+
     try {
-      await onLogin(email, password);
+      await authService.loginService(email, password);
+      navigate("/dashboard");
     } catch (error) {
-      setErrors({ password: 'Invalid email or password',error });
+      setErrors({ password: 'Invalid email or password', error });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -50,7 +61,7 @@ const LoginPage = ({ onLogin, onSignup, onBack, isLoading }) => {
       <div className="w-full max-w-md relative">
         {/* Back Button */}
         <button
-          onClick={onBack}
+          onClick={() => navigate("/")}
           className="flex items-center space-x-2 text-gray-600 hover:text-gray-900 mb-8 transition-colors"
         >
           <ArrowLeft size={20} />
@@ -158,7 +169,7 @@ const LoginPage = ({ onLogin, onSignup, onBack, isLoading }) => {
             <p className="text-gray-600">
               Don't have an account?{' '}
               <button
-                onClick={onSignup}
+                onClick={() => navigate("/signup")}
                 className="text-blue-600 hover:text-blue-700 font-medium"
               >
                 Sign up
@@ -167,12 +178,6 @@ const LoginPage = ({ onLogin, onSignup, onBack, isLoading }) => {
           </div>
         </div>
 
-        {/* Demo Credentials */}
-        <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-xl">
-          <p className="text-sm text-blue-800 font-medium mb-2">Demo Credentials:</p>
-          <p className="text-sm text-blue-700">Email: demo@medportal.com</p>
-          <p className="text-sm text-blue-700">Password: demo123</p>
-        </div>
       </div>
     </div>
   );

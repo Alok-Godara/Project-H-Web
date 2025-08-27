@@ -5,6 +5,7 @@ import authService from "./supabase/auth";
 import { Outlet } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { login, logout } from "./store/authSlice";
+import Navigation from "./components/Navigation";
 
 function App() {
   const dispatch = useDispatch();
@@ -27,7 +28,7 @@ function App() {
 
         if (user) {
           dispatch(login({ user }));
-          navigate("/app/dashboard");
+          navigate("/dashboard");
         } else {
           dispatch(logout());
           navigate("/login");
@@ -42,7 +43,7 @@ function App() {
     };
 
     checkAuth();
-  }, []);
+  }, [dispatch, navigate]);
 
   return loading ? (
     <div className="flex justify-center items-center h-screen bg-gray-900">
@@ -50,6 +51,7 @@ function App() {
     </div>
   ) : (
     <main>
+      <Navigation />
       <Outlet />
     </main>
   );
