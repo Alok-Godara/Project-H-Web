@@ -10,8 +10,6 @@ import LandingPage from "./pages/LandingPage.jsx";
 import Dashboard from "./components/Dashboard.jsx";
 import React from "react";
 import PatientPortal from "./components/PatientPortal.jsx";
-// import { useParams } from "react-router-dom";
-
 
 const router = createBrowserRouter([
   {
@@ -28,18 +26,18 @@ const router = createBrowserRouter([
   },
   {
     path: "/dashboard",
-    element: <App />, 
+    element: <App />,
     children: [
       {
         path: "",
-        element: <Dashboard />, 
+        element: <Dashboard />,
+      },
+      {
+        path: "patient/:patientId",
+        element: <PatientPortal />, 
       },
     ],
     // errorElement: <CustomErrorPage />
-  },
-  {
-    path: "/patient/:patientId",
-    element: <PatientPortal />,
   },
 ]);
 

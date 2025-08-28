@@ -5,7 +5,7 @@ import authService from "./supabase/auth";
 import { Outlet } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { login, logout } from "./store/authSlice";
-import Navigation from "./components/Navigation";
+
 
 function App() {
   const dispatch = useDispatch();
@@ -51,7 +51,6 @@ function App() {
     </div>
   ) : (
     <main>
-      <Navigation />
       <Outlet />
     </main>
   );

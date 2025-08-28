@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, User } from 'lucide-react';
+import { Search } from 'lucide-react';
+import { patients } from '../data/mockData.js';
 
 
 const PatientList = () => {
@@ -8,93 +9,10 @@ const PatientList = () => {
   const navigate = useNavigate();
 
   const onPatientSelect = (patient) => {
-    navigate(`/patient/${patient.id}`);
+    navigate(`/dashboard/patient/${patient.id}`);
   };
   
   const [searchTerm, setSearchTerm] = useState('');
-
-  const patients = [
-    {
-      id: 'P001',
-      name: 'John Doe',
-      age: 34,
-      sex: 'M',
-      profileImage: '',
-      hasUnreadDocuments: true,
-    },
-    {
-      id: 'P002',
-      name: 'Jane Smith',
-      age: 28,
-      sex: 'F',
-      profileImage: '',
-      hasUnreadDocuments: false,
-    },
-    {
-      id: 'P003',
-      name: 'Michael Johnson',
-      age: 45,
-      sex: 'M',
-      profileImage: '',
-      hasUnreadDocuments: true,
-    },
-    {
-      id: 'P004',
-      name: 'Emily Brown',
-      age: 52,
-      sex: 'F',
-      profileImage: '',
-      hasUnreadDocuments: false,
-    },
-    {
-      id: 'P005',
-      name: 'David Lee',
-      age: 39,
-      sex: 'M',
-      profileImage: '',
-      hasUnreadDocuments: false,
-    },
-    {
-      id: 'P006',
-      name: 'Sophia Martinez',
-      age: 31,
-      sex: 'F',
-      profileImage: '',
-      hasUnreadDocuments: true,
-    },
-    {
-      id: 'P007',
-      name: 'William Kim',
-      age: 60,
-      sex: 'M',
-      profileImage: '',
-      hasUnreadDocuments: false,
-    },
-    {
-      id: 'P008',
-      name: 'Olivia Wilson',
-      age: 25,
-      sex: 'F',
-      profileImage: '',
-      hasUnreadDocuments: false,
-    },
-    {
-      id: 'P009',
-      name: 'James Patel',
-      age: 50,
-      sex: 'M',
-      profileImage: '',
-      hasUnreadDocuments: true,
-    },
-    {
-      id: 'P010',
-      name: 'Ava Chen',
-      age: 42,
-      sex: 'F',
-      profileImage: '',
-      hasUnreadDocuments: false,
-    },
-  ];
 
   const filteredPatients = patients.filter(patient =>
     patient.name.toLowerCase().includes(searchTerm.toLowerCase()) ||

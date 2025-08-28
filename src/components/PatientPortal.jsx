@@ -5,6 +5,7 @@ import PatientDocs from "./PatientDocs";
 import { patients } from "../data/mockData";
 import { useParams } from "react-router-dom";
 import { useEffect } from "react";
+import Navigation from "./Navigation";
 
 const PatientPortal = () => {
   const { patientId } = useParams();
@@ -12,13 +13,16 @@ const PatientPortal = () => {
   const medicalEvents = getMedicalEventsForPatient(patientId);
   const [patient, setPatient] = useState(null);
 
+  // console.log("PatientPortal mounted, patientId:", patientId);
+  // console.log("Patient ID from URL:", patientId);
+  // console.log("Patient details:", patients);
+
   useEffect(() => {
-    async function fetchPatientDetails(patientid) {
+    async function fetchPatientDetails(patientId) {
       try {
         const response = patients.find(
-          (patient) => String(patient.id) === String(patientid)
+          (patient) => String(patient.id) === String(patientId)
         );
-        console.log("Fetched patient:", response);
         setPatient(response);
       } catch (err) {
         console.error("Error in useEffect:", err);
@@ -30,27 +34,38 @@ const PatientPortal = () => {
 
   console.log(patient);
 
-  return (
-    <div className="flex h-[calc(100vh-4rem)]">
-      {/* Left Pane - Timeline (60%) */}
-      <div className="w-[60%] border-r border-gray-200">
-        <Timeline
-          patient={patient}
-          events={medicalEvents}
-          onEventSelect={setSelectedEvent}
-          selectedEvent={selectedEvent}
-        />
+  if (!patient) {
+    return (
+      <div className="flex items-center justify-center h-full text-lg">
+        Loading patient data...
       </div>
+    );
+  }
 
-      {/* Right Pane - Details (40%) */}
-      <div className="w-[40%]">
-        <PatientDocs
-          patient={patient}
-          selectedEvent={selectedEvent}
-          onEventClose={() => setSelectedEvent(null)}
-        />
+  return (
+    <>
+      <Navigation />
+      <div className="flex h-[calc(100vh-4rem)] mt-13">
+        {/* Left Pane - Timeline (60%) */}
+        <div className="w-[60%] border-r border-gray-200">
+          <Timeline
+            patient={patient}
+            events={medicalEvents}
+            onEventSelect={setSelectedEvent}
+            selectedEvent={selectedEvent}
+          />
+        </div>
+
+        {/* Right Pane - Details (40%) */}
+        <div className="w-[40%]">
+          <PatientDocs
+            patient={patient}
+            selectedEvent={selectedEvent}
+            onEventClose={() => setSelectedEvent(null)}
+          />
+        </div>
       </div>
-    </div>
+    </>
   );
 };
 

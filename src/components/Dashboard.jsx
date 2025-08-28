@@ -1,8 +1,11 @@
 import PatientList from './PatientList';
+import Navigation from "./Navigation";
 
 
 const Dashboard = () => {
   return (
+    <>
+    <Navigation />
     <div className="h-[calc(100vh)] bg-gradient-to-br from-blue-50 via-white to-indigo-50 relative overflow-hidden">
       {/* Background Pattern */}
       <div className="absolute inset-0 opacity-5">
@@ -24,6 +27,7 @@ const Dashboard = () => {
         </div>
       </div>
     </div>
+    </>
   );
 };
 

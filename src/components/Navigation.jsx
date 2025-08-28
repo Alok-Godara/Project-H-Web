@@ -1,6 +1,55 @@
-import { Bell, Settings, User, ArrowLeft, Activity, LogOut } from 'lucide-react';
+import {
+  Bell,
+  Settings,
+  User,
+  ArrowLeft,
+  Activity,
+  LogOut,
+} from "lucide-react";
+import { useNavigate, useParams } from "react-router-dom";
+import { useEffect, useState } from "react";
 
-const Navigation = ({ onBackToDashboard, currentView, provider, onLogout }) => {
+const Navigation = () => {
+  const [provider, setProvider] = useState({
+    id: "provider-1",
+    name: "Dr. John Doe",
+    specialty: "Cardiology",
+  });
+
+  useEffect(() => {
+    // code for getting provider
+    const provider = {
+      id: "provider-2",
+      name: "Dr. Doe",
+      specialty: "Lodalogy",
+    };
+    setProvider(provider);
+  }, []);
+
+  const { patientId } = useParams();
+
+  const [onBackToDashboard, setOnBackToDashboard] = useState(false);
+  const [currentView, setCurrentView] = useState("dashboard");
+  const navigate = useNavigate();
+
+
+  useEffect(() => {
+    if (patientId) {
+      setOnBackToDashboard(true);
+      setCurrentView("patient-portal");
+    }
+  }, [patientId]);
+
+  const handleBackToDashboard = () => {
+    setOnBackToDashboard(false);
+    setCurrentView("dashboard");
+    navigate("/dashboard");
+  };
+
+  const handleLogout = () => {
+    // code for logging out
+  };
+
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200 h-16">
       <div className="flex items-center justify-between h-full px-6">
@@ -8,26 +57,28 @@ const Navigation = ({ onBackToDashboard, currentView, provider, onLogout }) => {
         <div className="flex items-center space-x-6">
           {onBackToDashboard && (
             <button
-              onClick={onBackToDashboard}
+              onClick={handleBackToDashboard}
               className="flex items-center space-x-2 text-gray-600 hover:text-gray-900 transition-colors"
             >
               <ArrowLeft size={20} />
             </button>
           )}
-          
+
           <div className="flex items-center space-x-3">
             <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
               <Activity className="text-white" size={20} />
             </div>
-            <span className="text-xl font-semibold text-gray-900">MedPortal</span>
+            <span className="text-xl font-semibold text-gray-900">
+              MedPortal
+            </span>
           </div>
 
           <div className="hidden md:flex items-center space-x-6 ml-8">
-            <button 
+            <button
               className={`px-3 py-2 text-sm font-medium transition-colors ${
-                currentView === 'dashboard' 
-                  ? 'text-blue-600 border-b-2 border-blue-600' 
-                  : 'text-gray-600 hover:text-gray-900'
+                currentView === "dashboard"
+                  ? "text-blue-600 border-b-2 border-blue-600"
+                  : "text-gray-600 hover:text-gray-900"
               }`}
             >
               Dashboard
@@ -41,11 +92,11 @@ const Navigation = ({ onBackToDashboard, currentView, provider, onLogout }) => {
             <Bell size={20} />
             <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full"></span>
           </button>
-          
+
           <button className="p-2 text-gray-600 hover:text-gray-900 transition-colors">
             <Settings size={20} />
           </button>
-          
+
           <div className="flex items-center space-x-2 pl-4 border-l border-gray-200">
             <div className="flex items-center space-x-3">
               <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
@@ -53,20 +104,22 @@ const Navigation = ({ onBackToDashboard, currentView, provider, onLogout }) => {
               </div>
               {provider && (
                 <div className="hidden md:block">
-                  <p className="text-sm font-medium text-gray-900">{provider.name}</p>
+                  <p className="text-sm font-medium text-gray-900">
+                    {provider.name}
+                  </p>
                   <p className="text-xs text-gray-500">{provider.specialty}</p>
                 </div>
               )}
             </div>
-            
-            <button 
-              onClick={onLogout}
+
+            <button
+              onClick={handleLogout}
               className="p-2 text-gray-600 hover:text-red-600 transition-colors"
               title="Sign Out"
             >
               <LogOut size={18} />
             </button>
-            </div>
+          </div>
         </div>
       </div>
     </nav>
