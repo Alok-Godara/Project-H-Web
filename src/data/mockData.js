@@ -1,3 +1,7 @@
+import img1 from './Images/1.jpg';
+import img2 from './Images/2.jpg';
+import img3 from './Images/3.jpg';
+
 export const patients= [
   {
     id: 'PAT001',
@@ -147,7 +151,8 @@ const medicalEvents = [
       { field: 'Hematocrit', value: '40.2%' },
       { field: 'Platelet Count', value: '285 K/uL' }
     ],
-    documentContent: 'Complete Blood Count Results\n\nPatient: Emily Johnson\nDate: January 15, 2024\n\nResults:\nWBC: 6.5 K/uL (Normal: 4.0-11.0)\nRBC: 4.2 M/uL (Normal: 4.0-5.5)\nHemoglobin: 13.5 g/dL (Normal: 12.0-16.0)\nHematocrit: 40.2% (Normal: 36-46)\nPlatelet Count: 285 K/uL (Normal: 150-450)\n\nInterpretation: All values within normal limits.'
+    documentContent: 'Complete Blood Count Results\n\nPatient: Emily Johnson\nDate: January 15, 2024\n\nResults:\nWBC: 6.5 K/uL (Normal: 4.0-11.0)\nRBC: 4.2 M/uL (Normal: 4.0-5.5)\nHemoglobin: 13.5 g/dL (Normal: 12.0-16.0)\nHematocrit: 40.2% (Normal: 36-46)\nPlatelet Count: 285 K/uL (Normal: 150-450)\n\nInterpretation: All values within normal limits.',
+  image: img1
   },
   {
     id: 'EVENT002',
@@ -163,7 +168,8 @@ const medicalEvents = [
       { field: 'BMI', value: '24.2' },
       { field: 'Assessment', value: 'Stable diabetes, well-controlled hypertension' }
     ],
-    documentContent: 'Annual Physical Examination\n\nPatient: Emily Johnson\nDate: January 8, 2024\n\nVitals:\nBP: 128/82 mmHg\nHR: 72 bpm\nTemp: 98.6°F\nWeight: 145 lbs\nBMI: 24.2\n\nReview of Systems: Negative for chest pain, shortness of breath, palpitations. Reports good energy levels.\n\nPhysical Exam: Normal heart sounds, clear lungs, abdomen soft and non-tender.\n\nAssessment: Type 2 diabetes mellitus - stable, well controlled. Hypertension - well controlled on current regimen.\n\nPlan: Continue current medications. Follow up in 6 months.'
+    documentContent: 'Annual Physical Examination\n\nPatient: Emily Johnson\nDate: January 8, 2024\n\nVitals:\nBP: 128/82 mmHg\nHR: 72 bpm\nTemp: 98.6°F\nWeight: 145 lbs\nBMI: 24.2\n\nReview of Systems: Negative for chest pain, shortness of breath, palpitations. Reports good energy levels.\n\nPhysical Exam: Normal heart sounds, clear lungs, abdomen soft and non-tender.\n\nAssessment: Type 2 diabetes mellitus - stable, well controlled. Hypertension - well controlled on current regimen.\n\nPlan: Continue current medications. Follow up in 6 months.',
+  image: img2
   },
   {
     id: 'EVENT003',
@@ -178,7 +184,8 @@ const medicalEvents = [
       { field: 'Glucose', value: '142 mg/dL' },
       { field: 'Target Goal', value: '<7.0%' }
     ],
-    documentContent: 'Hemoglobin A1c Results\n\nPatient: Emily Johnson\nDate: December 20, 2023\n\nResults:\nHbA1c: 6.8% (Target <7.0%)\nGlucose: 142 mg/dL\n\nInterpretation: Good glycemic control. Patient meeting target goals for diabetes management.'
+    documentContent: 'Hemoglobin A1c Results\n\nPatient: Emily Johnson\nDate: December 20, 2023\n\nResults:\nHbA1c: 6.8% (Target <7.0%)\nGlucose: 142 mg/dL\n\nInterpretation: Good glycemic control. Patient meeting target goals for diabetes management.',
+  image: img3
   },
   {
     id: 'EVENT004',
@@ -193,7 +200,8 @@ const medicalEvents = [
       { field: 'LDL Cholesterol', value: '105 mg/dL' },
       { field: 'HDL Cholesterol', value: '55 mg/dL' },
       { field: 'Triglycerides', value: '125 mg/dL' }
-    ]
+    ],
+  image: img2
   },
   {
     id: 'EVENT005',
@@ -207,7 +215,8 @@ const medicalEvents = [
       { field: 'Pap Smear', value: 'Normal' },
       { field: 'Breast Exam', value: 'Normal' },
       { field: 'Pelvic Exam', value: 'Normal' }
-    ]
+    ],
+  image: img1
   }
 ];
 

@@ -88,12 +88,12 @@ const Navigation = () => {
 
         {/* Right Side */}
         <div className="flex items-center space-x-4">
-          <button className="relative p-2 text-gray-600 hover:text-gray-900 transition-colors">
+          {/* <button className="relative p-2 text-gray-600 hover:text-gray-900 transition-colors">
             <Bell size={20} />
             <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full"></span>
-          </button>
+          </button> */}
 
-          <button className="p-2 text-gray-600 hover:text-gray-900 transition-colors">
+          <button onClick={() => navigate("/dashboard/provider")} className="p-2 text-gray-600 hover:text-gray-900 transition-colors">
             <Settings size={20} />
           </button>
 

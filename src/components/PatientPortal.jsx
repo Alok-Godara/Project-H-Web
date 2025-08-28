@@ -1,6 +1,5 @@
 import { useState } from "react";
 import Timeline from "./Timeline";
-import { getMedicalEventsForPatient } from "../data/mockData";
 import PatientDocs from "./PatientDocs";
 import { patients } from "../data/mockData";
 import { useParams } from "react-router-dom";
@@ -10,12 +9,7 @@ import Navigation from "./Navigation";
 const PatientPortal = () => {
   const { patientId } = useParams();
   const [selectedEvent, setSelectedEvent] = useState(null);
-  const medicalEvents = getMedicalEventsForPatient(patientId);
   const [patient, setPatient] = useState(null);
-
-  // console.log("PatientPortal mounted, patientId:", patientId);
-  // console.log("Patient ID from URL:", patientId);
-  // console.log("Patient details:", patients);
 
   useEffect(() => {
     async function fetchPatientDetails(patientId) {
@@ -32,7 +26,6 @@ const PatientPortal = () => {
     fetchPatientDetails(patientId);
   }, [patientId]);
 
-  console.log(patient);
 
   if (!patient) {
     return (
@@ -47,17 +40,16 @@ const PatientPortal = () => {
       <Navigation />
       <div className="flex h-[calc(100vh-4rem)] mt-13">
         {/* Left Pane - Timeline (60%) */}
-        <div className="w-[60%] border-r border-gray-200">
+        <div className="w-[60%] border-r border-gray-200 overflow-y-auto">
           <Timeline
             patient={patient}
-            events={medicalEvents}
-            onEventSelect={setSelectedEvent}
             selectedEvent={selectedEvent}
+            onEventSelect={setSelectedEvent}
           />
         </div>
 
         {/* Right Pane - Details (40%) */}
-        <div className="w-[40%]">
+        <div className="w-[40%] overflow-y-auto">
           <PatientDocs
             patient={patient}
             selectedEvent={selectedEvent}

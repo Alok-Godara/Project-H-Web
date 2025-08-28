@@ -1,37 +1,40 @@
-import { useState } from 'react';
-import { Filter, Search, FileText, TestTube, Stethoscope, Calendar } from 'lucide-react';
+import { useState } from "react";
+import {
+  Filter,
+  Search,
+  FileText,
+  TestTube,
+  Stethoscope,
+  Calendar,
+} from "lucide-react";
+import { getMedicalEventsForPatient } from "../data/mockData";
 
-const events = []; // get all events associated with patient id
+const Timeline = ({ patient, selectedEvent, onEventSelect }) => {
 
-const onEventSelect = (event) => {
-  console.log(event); // TODO: write code to complete the purpose
-};
+  const events = patient ? getMedicalEventsForPatient(patient.id) : [];
 
-const selectedEvent = null;
-
-const Timeline = ({ patient }) => {
   const [filterOpen, setFilterOpen] = useState(false);
   const [selectedFilters, setSelectedFilters] = useState([]);
-  const [searchTerm, setSearchTerm] = useState('');
-
-
+  const [searchTerm, setSearchTerm] = useState("");
 
   const eventTypes = [
-    { type: 'lab', label: 'Lab Results', icon: TestTube },
-    { type: 'visit', label: 'Office Visits', icon: Stethoscope },
-    { type: 'document', label: 'Documents', icon: FileText },
-    { type: 'appointment', label: 'Appointments', icon: Calendar },
+    { type: "lab", label: "Lab Results", icon: TestTube },
+    { type: "visit", label: "Office Visits", icon: Stethoscope },
+    { type: "document", label: "Documents", icon: FileText },
+    { type: "appointment", label: "Appointments", icon: Calendar },
   ];
 
   const getEventIcon = (type) => {
-    const eventType = eventTypes.find(et => et.type === type);
+    const eventType = eventTypes.find((et) => et.type === type);
     return eventType?.icon || FileText;
   };
 
-  const filteredEvents = events.filter(event => {
-    const matchesSearch = event.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         event.description.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesFilter = selectedFilters.length === 0 || selectedFilters.includes(event.type);
+  const filteredEvents = events.filter((event) => {
+    const matchesSearch =
+      event.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      event.description.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesFilter =
+      selectedFilters.length === 0 || selectedFilters.includes(event.type);
     return matchesSearch && matchesFilter;
   });
 
@@ -39,8 +42,11 @@ const Timeline = ({ patient }) => {
   const groupedEvents = filteredEvents.reduce((groups, event) => {
     const date = new Date(event.date);
     const monthKey = `${date.getFullYear()}-${date.getMonth()}`;
-    const monthLabel = date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-    
+    const monthLabel = date.toLocaleDateString("en-US", {
+      month: "long",
+      year: "numeric",
+    });
+
     if (!groups[monthKey]) {
       groups[monthKey] = { label: monthLabel, events: [] };
     }
@@ -54,10 +60,14 @@ const Timeline = ({ patient }) => {
       <div className="sticky top-0 bg-white border-b border-gray-200 p-6 z-10">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h2 className="text-xl font-semibold text-gray-900">{patient.name}</h2>
-            <p className="text-gray-600">{patient.age}y {patient.sex} • ID: {patient.id}</p>
+            <h2 className="text-xl font-semibold text-gray-900">
+              {patient.name}
+            </h2>
+            <p className="text-gray-600">
+              {patient.age}y {patient.sex} • ID: {patient.id}
+            </p>
           </div>
-          
+
           <div className="flex items-center space-x-2">
             <div className="relative">
               <button
@@ -67,12 +77,17 @@ const Timeline = ({ patient }) => {
                 <Filter size={18} />
                 <span className="text-sm">Filter</span>
               </button>
-              
+
               {filterOpen && (
                 <div className="absolute right-0 top-full mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg p-3 z-20">
-                  <h3 className="text-sm font-medium text-gray-900 mb-2">Document Types</h3>
+                  <h3 className="text-sm font-medium text-gray-900 mb-2">
+                    Document Types
+                  </h3>
                   {eventTypes.map((type) => (
-                    <label key={type.type} className="flex items-center space-x-2 py-1">
+                    <label
+                      key={type.type}
+                      className="flex items-center space-x-2 py-1"
+                    >
                       <input
                         type="checkbox"
                         checked={selectedFilters.includes(type.type)}
@@ -80,12 +95,16 @@ const Timeline = ({ patient }) => {
                           if (e.target.checked) {
                             setSelectedFilters([...selectedFilters, type.type]);
                           } else {
-                            setSelectedFilters(selectedFilters.filter(f => f !== type.type));
+                            setSelectedFilters(
+                              selectedFilters.filter((f) => f !== type.type)
+                            );
                           }
                         }}
                         className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                       />
-                      <span className="text-sm text-gray-700">{type.label}</span>
+                      <span className="text-sm text-gray-700">
+                        {type.label}
+                      </span>
                     </label>
                   ))}
                 </div>
@@ -112,65 +131,77 @@ const Timeline = ({ patient }) => {
         {Object.entries(groupedEvents)
           .sort(([a], [b]) => b.localeCompare(a))
           .map(([monthKey, group]) => (
-          <div key={monthKey} className="mb-8">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4 sticky top-0 bg-white py-2">
-              {group.label}
-            </h3>
-            
-            <div className="space-y-3">
-              {group.events
-                .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-                .map((event) => {
-                const EventIcon = getEventIcon(event.type);
-                const isSelected = selectedEvent?.id === event.id;
-                
-                return (
-                  <div
-                    key={event.id}
-                    onClick={() => onEventSelect(event)}
-                    className={`p-4 border rounded-lg cursor-pointer transition-all duration-200 ${
-                      isSelected 
-                        ? 'border-blue-500 bg-blue-50 shadow-md' 
-                        : 'border-gray-200 hover:border-blue-300 hover:shadow-sm bg-white'
-                    }`}
-                  >
-                    <div className="flex items-start space-x-3">
-                      <div className={`p-2 rounded-lg ${
-                        isSelected ? 'bg-blue-100' : 'bg-gray-100'
-                      }`}>
-                        <EventIcon size={18} className={
-                          isSelected ? 'text-blue-600' : 'text-gray-600'
-                        } />
-                      </div>
-                      
-                      <div className="flex-1 min-w-0">
-                        <h4 className={`font-medium ${
-                          isSelected ? 'text-blue-900' : 'text-gray-900'
-                        }`}>
-                          {event.title}
-                        </h4>
-                        <p className="text-sm text-gray-600 mt-1 line-clamp-2">
-                          {event.description}
-                        </p>
-                        <div className="flex items-center space-x-4 mt-2 text-xs text-gray-500">
-                          <span>{new Date(event.date).toLocaleDateString()}</span>
-                          <span>•</span>
-                          <span className="capitalize">{event.type}</span>
-                          {event.provider && (
-                            <>
+            <div key={monthKey} className="mb-8">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4 sticky top-0 bg-white py-2">
+                {group.label}
+              </h3>
+
+              <div className="space-y-3">
+                {group.events
+                  .sort(
+                    (a, b) =>
+                      new Date(b.date).getTime() - new Date(a.date).getTime()
+                  )
+                  .map((event) => {
+                    const EventIcon = getEventIcon(event.type);
+                    const isSelected = selectedEvent?.id === event.id;
+
+                    return (
+                      <div
+                        key={event.id}
+                        onClick={() => onEventSelect(event)}
+                        className={`p-4 border rounded-lg cursor-pointer transition-all duration-200 ${
+                          isSelected
+                            ? "border-blue-500 bg-blue-50 shadow-md"
+                            : "border-gray-200 hover:border-blue-300 hover:shadow-sm bg-white"
+                        }`}
+                      >
+                        <div className="flex items-start space-x-3">
+                          <div
+                            className={`p-2 rounded-lg ${
+                              isSelected ? "bg-blue-100" : "bg-gray-100"
+                            }`}
+                          >
+                            <EventIcon
+                              size={18}
+                              className={
+                                isSelected ? "text-blue-600" : "text-gray-600"
+                              }
+                            />
+                          </div>
+
+                          <div className="flex-1 min-w-0">
+                            <h4
+                              className={`font-medium ${
+                                isSelected ? "text-blue-900" : "text-gray-900"
+                              }`}
+                            >
+                              {event.title}
+                            </h4>
+                            <p className="text-sm text-gray-600 mt-1 line-clamp-2">
+                              {event.description}
+                            </p>
+                            <div className="flex items-center space-x-4 mt-2 text-xs text-gray-500">
+                              <span>
+                                {new Date(event.date).toLocaleDateString()}
+                              </span>
                               <span>•</span>
-                              <span>{event.provider}</span>
-                            </>
-                          )}
+                              <span className="capitalize">{event.type}</span>
+                              {event.provider && (
+                                <>
+                                  <span>•</span>
+                                  <span>{event.provider}</span>
+                                </>
+                              )}
+                            </div>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  </div>
-                );
-              })}
+                    );
+                  })}
+              </div>
             </div>
-          </div>
-        ))}
+          ))}
       </div>
     </div>
   );

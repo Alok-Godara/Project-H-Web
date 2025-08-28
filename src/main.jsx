@@ -10,6 +10,7 @@ import LandingPage from "./pages/LandingPage.jsx";
 import Dashboard from "./components/Dashboard.jsx";
 import React from "react";
 import PatientPortal from "./components/PatientPortal.jsx";
+import ProviderProfile from "./components/ProviderProfile.jsx";
 
 const router = createBrowserRouter([
   {
@@ -36,6 +37,10 @@ const router = createBrowserRouter([
         path: "patient/:patientId",
         element: <PatientPortal />, 
       },
+      {
+        path: "provider",
+        element: <ProviderProfile />,
+      }
     ],
     // errorElement: <CustomErrorPage />
   },
