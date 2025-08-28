@@ -1,7 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, {useState } from 'react';
 import { User, Mail, Phone, Stethoscope, FileText, Save, ArrowLeft, Eye, EyeOff } from 'lucide-react';
 import { useSelector } from 'react-redux';
-import authSlice from '../store/authSlice.js';
 import { useNavigate } from 'react-router-dom';
 
 
