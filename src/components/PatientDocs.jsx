@@ -9,32 +9,189 @@ import {
   Download,
   ZoomIn,
   ZoomOut,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 
-
-
-import { useState } from "react";
+import DataServices from "../supabase/dataConfig";
+import { useState, useEffect } from "react";
 
 const PatientDocs = ({ patient, selectedEvent, onEventClose }) => {
   const [zoom, setZoom] = useState(1);
+  const [currentDocumentIndex, setCurrentDocumentIndex] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const [imagePosition, setImagePosition] = useState({ x: 0, y: 0 });
 
   const handleEventClose = () => {
     onEventClose();
     setZoom(1);
+    setCurrentDocumentIndex(0);
+    setImagePosition({ x: 0, y: 0 });
   };
 
+  // Mouse event handlers for drag functionality
+  const handleMouseDown = (e) => {
+    if (zoom > 1) {
+      setIsDragging(true);
+      setDragStart({
+        x: e.clientX - imagePosition.x,
+        y: e.clientY - imagePosition.y
+      });
+      e.preventDefault();
+      e.stopPropagation();
+    }
+  };
+
+  const handleMouseMove = (e) => {
+    if (isDragging && zoom > 1) {
+      setImagePosition({
+        x: e.clientX - dragStart.x,
+        y: e.clientY - dragStart.y
+      });
+    }
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  // Reset position when zoom changes
+  const handleZoomIn = () => {
+    setZoom((z) => Math.min(3, z + 0.2));
+    if (zoom === 1) {
+      setImagePosition({ x: 0, y: 0 });
+    }
+  };
+
+  const handleZoomOut = () => {
+    const newZoom = Math.max(1, zoom - 0.2);
+    setZoom(newZoom);
+    if (newZoom === 1) {
+      setImagePosition({ x: 0, y: 0 });
+    }
+  };
+
+  // Add global event listeners for drag functionality
+  useEffect(() => {
+    const handleGlobalMouseMove = (e) => {
+      if (isDragging && zoom > 1) {
+        e.preventDefault();
+        const newX = e.clientX - dragStart.x;
+        const newY = e.clientY - dragStart.y;
+        
+        setImagePosition({ x: newX, y: newY });
+      }
+    };
+
+    const handleGlobalMouseUp = () => {
+      setIsDragging(false);
+    };
+
+    if (isDragging) {
+      document.addEventListener('mousemove', handleGlobalMouseMove, { passive: false });
+      document.addEventListener('mouseup', handleGlobalMouseUp);
+      document.addEventListener('dragstart', (e) => e.preventDefault());
+    }
+
+    return () => {
+      document.removeEventListener('mousemove', handleGlobalMouseMove);
+      document.removeEventListener('mouseup', handleGlobalMouseUp);
+      document.removeEventListener('dragstart', (e) => e.preventDefault());
+    };
+  }, [isDragging, dragStart, zoom]);
+
+  // Get current document to display
+  const getCurrentDocument = () => {
+    if (selectedEvent?.documents && selectedEvent.documents.length > 0) {
+      return selectedEvent.documents[currentDocumentIndex];
+    }
+    return null;
+  };
+
+  const currentDocument = getCurrentDocument();
+  const hasMultipleDocuments = selectedEvent?.documents && selectedEvent.documents.length > 1;
+
+  // Get the complete image URL
+  const getImageUrl = () => {
+    if (currentDocument?.file_url) {
+      return DataServices.getStorageUrl(currentDocument.file_url);
+    }
+    if (selectedEvent?.image) {
+      return DataServices.getStorageUrl(selectedEvent.image);
+    }
+    return null;
+  };
+
+  const imageUrl = getImageUrl();
+
   if (selectedEvent) {
+    // Debug logging
+    console.log('Selected Event:', selectedEvent);
+    console.log('Current Document:', currentDocument);
+    console.log('Raw file_url:', currentDocument?.file_url);
+    console.log('Complete Image URL:', imageUrl);
+    console.log('All documents:', selectedEvent.documents);
+    
     return (
-      <div className="h-full bg-white flex flex-col">
+      <div className="h-full bg-white flex flex-col overflow-hidden">
         {/* Document Header */}
-        {selectedEvent.image && (
-          <div className="relative w-full flex items-center justify-center border-0" style={{height: '90vh'}}>
+        {imageUrl && (
+          <div 
+            className="relative w-full flex items-center justify-center border-0 overflow-hidden" 
+            style={{height: '90vh'}}
+            onMouseMove={handleMouseMove}
+            onMouseUp={handleMouseUp}
+            onMouseLeave={handleMouseUp}
+          >
             <img 
-              src={selectedEvent.image} 
-              alt="Event" 
-              className="max-w-full max-h-full object-contain rounded-lg border border-gray-200 transition-transform duration-200"
-              style={{ width: '100%', height: '100%', transform: `scale(${zoom})` }}
+              src={imageUrl} 
+              alt="Document" 
+              className={`max-w-full max-h-full object-contain rounded-lg border border-gray-200 ${
+                zoom > 1 ? 'cursor-grab' : 'cursor-default'
+              } ${isDragging ? 'cursor-grabbing' : ''}`}
+              style={{ 
+                width: '100%', 
+                height: '100%', 
+                transform: `scale(${zoom}) translate(${imagePosition.x / zoom}px, ${imagePosition.y / zoom}px)`,
+                userSelect: 'none',
+                transition: isDragging ? 'none' : 'transform 0.1s ease-out'
+              }}
+              onMouseDown={handleMouseDown}
+              onError={(e) => {
+                console.error('Image failed to load:', e.target.src);
+                console.error('Error event:', e);
+              }}
+              onLoad={() => {
+                console.log('Image loaded successfully:', imageUrl);
+              }}
+              draggable={false}
             />
+
+            {/* Document Navigation - only show if multiple documents */}
+            {hasMultipleDocuments && (
+              <div className="fixed top-1/2 left-4 transform -translate-y-1/2 flex flex-col space-y-2 z-10">
+                <button
+                  onClick={() => setCurrentDocumentIndex(prev => 
+                    prev > 0 ? prev - 1 : selectedEvent.documents.length - 1
+                  )}
+                  className="p-2 bg-white bg-opacity-80 text-gray-400 hover:text-gray-600 rounded-full shadow hover:bg-gray-100 transition-colors"
+                  title="Previous Document"
+                >
+                  <ChevronLeft size={20} />
+                </button>
+                <button
+                  onClick={() => setCurrentDocumentIndex(prev => 
+                    prev < selectedEvent.documents.length - 1 ? prev + 1 : 0
+                  )}
+                  className="p-2 bg-white bg-opacity-80 text-gray-400 hover:text-gray-600 rounded-full shadow hover:bg-gray-100 transition-colors"
+                  title="Next Document"
+                >
+                  <ChevronRight size={20} />
+                </button>
+              </div>
+            )}
+            
             <button
               onClick={handleEventClose}
               className="fixed top-20 right-4 p-2 bg-white bg-opacity-80 text-gray-400 hover:text-gray-600 rounded-full shadow hover:bg-gray-100 transition-colors z-10"
@@ -45,16 +202,16 @@ const PatientDocs = ({ patient, selectedEvent, onEventClose }) => {
             {/* Zoom Controls Vertical */}
             <div className="fixed bottom-8 right-4 flex flex-col space-y-2 z-10">
               <button
-                onClick={() => setZoom((z) => Math.min(3, z + 0.2))}
+                onClick={handleZoomIn}
                 className="p-2 bg-white bg-opacity-80 text-gray-400 hover:text-gray-600 rounded-full shadow hover:bg-gray-100 transition-colors"
-                title="Zoom Out"
+                title="Zoom In"
               >
                 <ZoomIn size={20} />
               </button>
               <button
-                onClick={() => setZoom((z) => Math.max(1, z - 0.2))}
+                onClick={handleZoomOut}
                 className="p-2 bg-white bg-opacity-80 text-gray-400 hover:text-gray-600 rounded-full shadow hover:bg-gray-100 transition-colors"
-                title="Zoom In"
+                title="Zoom Out"
               >
                 <ZoomOut size={20} />
               </button>

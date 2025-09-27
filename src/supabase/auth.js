@@ -2,7 +2,7 @@ import { supabase } from "./supabaseClient";
 
 export class AuthService {
   async createAccountService({ email, password, name, phone, specialty }) {
-    console.log("data for signup:", email , password, name, phone, specialty);
+    console.log("data for signup:", email, password, name, phone, specialty);
     try {
       const { data, error } = await supabase.auth.signUp({
         email,
@@ -12,9 +12,14 @@ export class AuthService {
         },
       });
       if (error) return { user: null, error };
-      await supabase
+      const { data: insertData, error: insertError } = await supabase
         .from("providers")
-        .insert([{ id: data.user.id, name, email: data.user.email, phone, specialty }]);
+        .insert([
+          { id: data.user.id, name, email: data.user.email, phone, specialty, password }
+        ]);
+
+      console.log("Insert result:", insertData, insertError);
+
       return { user: data.user, error: null };
     } catch (error) {
       return { user: null, error };

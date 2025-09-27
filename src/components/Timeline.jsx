@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Filter,
   Search,
@@ -7,15 +7,75 @@ import {
   Stethoscope,
   Calendar,
 } from "lucide-react";
-import { getMedicalEventsForPatient } from "../data/mockData";
+import DataServices from "../supabase/dataConfig";
 
 const Timeline = ({ patient, selectedEvent, onEventSelect }) => {
 
-  const events = patient ? getMedicalEventsForPatient(patient.id) : [];
-
+  const [events, setEvents] = useState([]);
+  const [isLoadingEvents, setIsLoadingEvents] = useState(false);
   const [filterOpen, setFilterOpen] = useState(false);
   const [selectedFilters, setSelectedFilters] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [eventDocuments, setEventDocuments] = useState({});
+  const [loadingDocuments, setLoadingDocuments] = useState({});
+
+  // Load medical events when patient changes
+  useEffect(() => {
+    const loadMedicalEvents = async () => {
+      if (!patient?.id) {
+        setEvents([]);
+        return;
+      }
+
+      setIsLoadingEvents(true);
+      try {
+        const transformedEvents = await DataServices.getTransformedMedicalEventsForPatient(patient.id);
+        setEvents(transformedEvents);
+      } catch (error) {
+        console.error('Error loading medical events:', error);
+        setEvents([]);
+      } finally {
+        setIsLoadingEvents(false);
+      }
+    };
+
+    loadMedicalEvents();
+  }, [patient]);
+
+  // Handle event selection and fetch associated documents
+  const handleEventSelect = async (event) => {
+    // Call the parent's onEventSelect first
+    onEventSelect(event);
+    
+    // If we already have documents for this event, don't fetch again
+    if (eventDocuments[event.id]) {
+      return;
+    }
+    
+    // Set loading state for this event
+    setLoadingDocuments(prev => ({ ...prev, [event.id]: true }));
+    
+    try {
+      const documents = await DataServices.getEventDocuments(event.id);
+      setEventDocuments(prev => ({ ...prev, [event.id]: documents }));
+      
+      // Update the event with document images and call onEventSelect again with updated data
+      const eventWithDocuments = {
+        ...event,
+        documents,
+        image: documents.length > 0 ? DataServices.getStorageUrl(documents[0].file_url) : null
+      };
+      console.log('Event with documents:', eventWithDocuments);
+      console.log('First document file_url:', documents[0]?.file_url);
+      console.log('Complete image URL:', eventWithDocuments.image);
+      onEventSelect(eventWithDocuments);
+    } catch (error) {
+      console.error('Error fetching event documents:', error);
+      setEventDocuments(prev => ({ ...prev, [event.id]: [] }));
+    } finally {
+      setLoadingDocuments(prev => ({ ...prev, [event.id]: false }));
+    }
+  };
 
   const eventTypes = [
     { type: "lab", label: "Lab Results", icon: TestTube },
@@ -128,9 +188,25 @@ const Timeline = ({ patient, selectedEvent, onEventSelect }) => {
 
       {/* Timeline Content */}
       <div className="flex-1 overflow-y-auto p-6">
-        {Object.entries(groupedEvents)
-          .sort(([a], [b]) => b.localeCompare(a))
-          .map(([monthKey, group]) => (
+        {isLoadingEvents ? (
+          <div className="flex items-center justify-center h-32">
+            <div className="text-center">
+              <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+              <p className="text-gray-600 text-sm">Loading medical history...</p>
+            </div>
+          </div>
+        ) : Object.entries(groupedEvents).length === 0 ? (
+          <div className="text-center py-8">
+            <FileText className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+            <p className="text-gray-500">No medical events found</p>
+            {searchTerm && (
+              <p className="text-gray-400 text-sm mt-2">Try adjusting your search criteria</p>
+            )}
+          </div>
+        ) : (
+          Object.entries(groupedEvents)
+            .sort(([a], [b]) => b.localeCompare(a))
+            .map(([monthKey, group]) => (
             <div key={monthKey} className="mb-8">
               <h3 className="text-lg font-semibold text-gray-900 mb-4 sticky top-0 bg-white py-2">
                 {group.label}
@@ -149,7 +225,7 @@ const Timeline = ({ patient, selectedEvent, onEventSelect }) => {
                     return (
                       <div
                         key={event.id}
-                        onClick={() => onEventSelect(event)}
+                        onClick={() => handleEventSelect(event)}
                         className={`p-4 border rounded-lg cursor-pointer transition-all duration-200 ${
                           isSelected
                             ? "border-blue-500 bg-blue-50 shadow-md"
@@ -183,7 +259,7 @@ const Timeline = ({ patient, selectedEvent, onEventSelect }) => {
                             </p>
                             <div className="flex items-center space-x-4 mt-2 text-xs text-gray-500">
                               <span>
-                                {new Date(event.date).toLocaleDateString()}
+                                {DataServices.formatDate(event.date)}
                               </span>
                               <span>•</span>
                               <span className="capitalize">{event.type}</span>
@@ -191,6 +267,15 @@ const Timeline = ({ patient, selectedEvent, onEventSelect }) => {
                                 <>
                                   <span>•</span>
                                   <span>{event.provider}</span>
+                                </>
+                              )}
+                              {loadingDocuments[event.id] && (
+                                <>
+                                  <span>•</span>
+                                  <span className="flex items-center">
+                                    <div className="w-3 h-3 border border-gray-400 border-t-transparent rounded-full animate-spin mr-1"></div>
+                                    Loading docs...
+                                  </span>
                                 </>
                               )}
                             </div>
@@ -201,7 +286,8 @@ const Timeline = ({ patient, selectedEvent, onEventSelect }) => {
                   })}
               </div>
             </div>
-          ))}
+          ))
+        )}
       </div>
     </div>
   );

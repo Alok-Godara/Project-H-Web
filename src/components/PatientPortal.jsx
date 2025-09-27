@@ -1,7 +1,7 @@
 import { useState } from "react";
 import Timeline from "./Timeline";
 import PatientDocs from "./PatientDocs";
-import { patients } from "../data/mockData";
+import DataServices from "../supabase/dataConfig";
 import { useParams } from "react-router-dom";
 import { useEffect } from "react";
 import Navigation from "./Navigation";
@@ -14,12 +14,11 @@ const PatientPortal = () => {
   useEffect(() => {
     async function fetchPatientDetails(patientId) {
       try {
-        const response = patients.find(
-          (patient) => String(patient.id) === String(patientId)
-        );
+        const response = await DataServices.getTransformedPatientById(patientId);
         setPatient(response);
       } catch (err) {
         console.error("Error in useEffect:", err);
+        setPatient(null);
       }
     }
 
@@ -49,7 +48,7 @@ const PatientPortal = () => {
         </div>
 
         {/* Right Pane - Details (40%) */}
-        <div className="w-[40%] overflow-y-auto">
+        <div className={`w-[40%] ${selectedEvent ? 'overflow-hidden' : 'overflow-y-auto'}`}>
           <PatientDocs
             patient={patient}
             selectedEvent={selectedEvent}

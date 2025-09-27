@@ -8,6 +8,8 @@ export const patients= [
     name: 'Emily Johnson',
     age: 34,
     sex: 'F',
+    phone: '5551234567',
+    email: 'emily.johnson@email.com',
     hasUnreadDocuments: true,
     allergies: [
       { allergen: 'Penicillin', reaction: 'Rash' },
@@ -33,6 +35,8 @@ export const patients= [
     name: 'Michael Chen',
     age: 45,
     sex: 'M',
+    phone: '5559876543',
+    email: 'michael.chen@email.com',
     hasUnreadDocuments: false,
     allergies: [],
     medications: [
@@ -53,6 +57,8 @@ export const patients= [
     name: 'Sarah Williams',
     age: 28,
     sex: 'F',
+    phone: '5555551234',
+    email: 'sarah.williams@email.com',
     hasUnreadDocuments: true,
     allergies: [
       { allergen: 'Latex', reaction: 'Contact dermatitis' }
@@ -71,6 +77,8 @@ export const patients= [
     name: 'Robert Davis',
     age: 62,
     sex: 'M',
+    phone: '5554567890',
+    email: 'robert.davis@email.com',
     hasUnreadDocuments: false,
     allergies: [
       { allergen: 'Aspirin', reaction: 'GI bleeding' }
@@ -95,6 +103,8 @@ export const patients= [
     name: 'Lisa Thompson',
     age: 39,
     sex: 'F',
+    phone: '5556789012',
+    email: 'lisa.thompson@email.com',
     hasUnreadDocuments: true,
     allergies: [],
     medications: [
@@ -115,6 +125,8 @@ export const patients= [
     name: 'David Wilson',
     age: 51,
     sex: 'M',
+    phone: '5557890123',
+    email: 'david.wilson@email.com',
     hasUnreadDocuments: false,
     allergies: [
       { allergen: 'Sulfa drugs', reaction: 'Stevens-Johnson syndrome' }
