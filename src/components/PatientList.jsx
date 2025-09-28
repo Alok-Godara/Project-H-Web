@@ -173,13 +173,6 @@ const PatientList = () => {
     setAccessStatus(null);
   };
   
-  // Open patient access management (for testing)
-  const handleOpenAccessManagement = (patient, e) => {
-    e.stopPropagation(); // Prevent patient selection
-    setSelectedPatientForAccess(patient.id);
-    setShowAccessManagement(true);
-  };
-  
   // Close access management modal
   const handleCloseAccessManagement = () => {
     setShowAccessManagement(false);
@@ -320,12 +313,6 @@ const PatientList = () => {
           <div className="text-center mb-6">
             <h2 className="text-2xl font-bold text-gray-900 mb-2">Select Patient</h2>
             <p className="text-gray-600">Select a patient to view their complete medical history</p>
-            <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-              <p className="text-xs text-blue-700">
-                <Settings className="inline w-3 h-3 mr-1" />
-                Click the settings icon on patient cards to simulate patient access management (Grant/Revoke)
-              </p>
-            </div>
           </div>
           
           {/* Search Bar */}
@@ -406,15 +393,6 @@ const PatientList = () => {
                     </div>
                   )}
                 </div>
-
-                {/* Access Management Button (for testing) */}
-                <button
-                  onClick={(e) => handleOpenAccessManagement(patient, e)}
-                  className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                  title="Manage Access (Patient View - for testing)"
-                >
-                  <Settings size={18} />
-                </button>
                 
                 {/* Unread indicator */}
                 {patient.hasUnreadDocuments && (
