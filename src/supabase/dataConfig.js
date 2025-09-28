@@ -208,6 +208,272 @@ class DataServicesClass {
         }
     }
 
+    // Provider-Patient Access Control Functions
+    
+    // Check provider access to a specific patient
+    async checkProviderPatientAccess(providerId, patientId) {
+        try {
+            const { data, error } = await supabase
+                .from('provider_patient_access')
+                .select('*')
+                .eq('provider_id', providerId)
+                .eq('patient_id', patientId)
+                .single();
+            
+            if (error && error.code !== 'PGRST116') { // PGRST116 = no rows returned
+                throw error;
+            }
+            
+            return { access: data, error: null };
+        } catch (error) {
+            console.error('Error checking provider-patient access:', error);
+            return { access: null, error: error.message };
+        }
+    }
+
+    // Request access to a patient (insert new request)
+    async requestPatientAccess(providerId, patientId) {
+        try {
+            // Log the access request attempt
+            await this.logAccessRequest(providerId, patientId, 'request', 'attempting');
+            
+            const { data, error } = await supabase
+                .from('provider_patient_access')
+                .insert({
+                    provider_id: providerId,
+                    patient_id: patientId,
+                    status: 'pending',
+                    granted_at: null,
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString()
+                })
+                .select()
+                .single();
+            
+            if (error) throw error;
+            
+            console.log('Access request created:', data);
+            
+            // Log successful request
+            await this.logAccessRequest(providerId, patientId, 'request', 'success', 'Access request created successfully');
+            
+            return { success: true, data, error: null };
+        } catch (error) {
+            console.error('Error requesting patient access:', error);
+            
+            // Log failed request
+            await this.logAccessRequest(providerId, patientId, 'request', 'failed', error.message);
+            
+            return { success: false, data: null, error: error.message };
+        }
+    }
+
+    // Update existing access request (for "Request Again" functionality)
+    async updatePatientAccessRequest(providerId, patientId) {
+        try {
+            // Log the re-request attempt
+            await this.logAccessRequest(providerId, patientId, 'request_again', 'attempting');
+            
+            const { data, error } = await supabase
+                .from('provider_patient_access')
+                .update({
+                    status: 'pending',
+                    granted_at: null,
+                    updated_at: new Date().toISOString()
+                })
+                .eq('provider_id', providerId)
+                .eq('patient_id', patientId)
+                .select()
+                .single();
+            
+            if (error) throw error;
+            
+            console.log('Access request updated:', data);
+            
+            // Log successful re-request
+            await this.logAccessRequest(providerId, patientId, 'request_again', 'success', 'Access re-request submitted successfully');
+            
+            return { success: true, data, error: null };
+        } catch (error) {
+            console.error('Error updating patient access request:', error);
+            
+            // Log failed re-request
+            await this.logAccessRequest(providerId, patientId, 'request_again', 'failed', error.message);
+            
+            return { success: false, data: null, error: error.message };
+        }
+    }
+
+    // Get all patients accessible to a provider (updated to use access control)
+    async getAccessiblePatientsForProvider(providerId) {
+        try {
+            const { data, error } = await supabase
+                .from('provider_patient_access')
+                .select(`
+                    patient_id,
+                    status,
+                    granted_at,
+                    patients (*)
+                `)
+                .eq('provider_id', providerId)
+                .eq('status', 'allowed');
+            
+            if (error) throw error;
+            
+            // Extract patient data and transform it
+            const patients = data?.map(item => 
+                this.transformPatientData(item.patients)
+            ) || [];
+            
+            return { patients, error: null };
+        } catch (error) {
+            console.error('Error getting accessible patients:', error);
+            return { patients: [], error: error.message };
+        }
+    }
+
+    // Revoke patient access (for patient-side functionality)
+    async revokePatientAccess(providerId, patientId) {
+        try {
+            // Log the revocation attempt
+            await this.logAccessRequest(providerId, patientId, 'revoke', 'attempting', 'Patient revoking access');
+            
+            const { data, error } = await supabase
+                .from('provider_patient_access')
+                .update({
+                    status: 'revoked',
+                    granted_at: null,
+                    updated_at: new Date().toISOString()
+                })
+                .eq('provider_id', providerId)
+                .eq('patient_id', patientId)
+                .select()
+                .single();
+            
+            if (error) throw error;
+            
+            console.log('Access revoked:', data);
+            
+            // Log successful revocation
+            await this.logAccessRequest(providerId, patientId, 'revoke', 'success', 'Access successfully revoked by patient');
+            
+            return { success: true, data, error: null };
+        } catch (error) {
+            console.error('Error revoking patient access:', error);
+            
+            // Log failed revocation
+            await this.logAccessRequest(providerId, patientId, 'revoke', 'failed', error.message);
+            
+            return { success: false, data: null, error: error.message };
+        }
+    }
+
+    // Grant patient access (for patient-side functionality)
+    async grantPatientAccess(providerId, patientId) {
+        try {
+            // Log the grant attempt
+            await this.logAccessRequest(providerId, patientId, 'grant', 'attempting', 'Patient granting access');
+            
+            const { data, error } = await supabase
+                .from('provider_patient_access')
+                .update({
+                    status: 'allowed',
+                    granted_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString()
+                })
+                .eq('provider_id', providerId)
+                .eq('patient_id', patientId)
+                .select()
+                .single();
+            
+            if (error) throw error;
+            
+            console.log('Access granted:', data);
+            
+            // Log successful grant
+            await this.logAccessRequest(providerId, patientId, 'grant', 'success', 'Access successfully granted by patient');
+            
+            return { success: true, data, error: null };
+        } catch (error) {
+            console.error('Error granting patient access:', error);
+            
+            // Log failed grant
+            await this.logAccessRequest(providerId, patientId, 'grant', 'failed', error.message);
+            
+            return { success: false, data: null, error: error.message };
+        }
+    }
+
+    // Deny patient access request (for patient-side functionality)
+    async denyPatientAccess(providerId, patientId) {
+        try {
+            // Log the deny attempt
+            await this.logAccessRequest(providerId, patientId, 'deny', 'attempting', 'Patient denying access request');
+            
+            const { data, error } = await supabase
+                .from('provider_patient_access')
+                .update({
+                    status: 'denied',
+                    granted_at: null,
+                    updated_at: new Date().toISOString()
+                })
+                .eq('provider_id', providerId)
+                .eq('patient_id', patientId)
+                .select()
+                .single();
+            
+            if (error) throw error;
+            
+            console.log('Access denied:', data);
+            
+            // Log successful denial
+            await this.logAccessRequest(providerId, patientId, 'deny', 'success', 'Access request successfully denied by patient');
+            
+            return { success: true, data, error: null };
+        } catch (error) {
+            console.error('Error denying patient access:', error);
+            
+            // Log failed denial
+            await this.logAccessRequest(providerId, patientId, 'deny', 'failed', error.message);
+            
+            return { success: false, data: null, error: error.message };
+        }
+    }
+
+    // Log access request attempts for auditability
+    async logAccessRequest(providerId, patientId, action, status = null, notes = null) {
+        try {
+            const logEntry = {
+                provider_id: providerId,
+                patient_id: patientId,
+                action: action, // 'request', 'request_again', 'view_attempt', 'revoke', 'grant', etc.
+                status: status, // 'success', 'failed', 'pending', 'allowed', 'denied', 'revoked', etc.
+                notes: notes,
+                timestamp: new Date().toISOString(),
+                ip_address: null, // Could be populated if needed
+                user_agent: navigator?.userAgent || null
+            };
+            
+            console.log('Access Request Log:', logEntry);
+            
+            // If you have an audit_log table, uncomment the following:
+            /*
+            const { error } = await supabase
+                .from('access_audit_log')
+                .insert([logEntry]);
+            
+            if (error) {
+                console.error('Failed to log access request:', error);
+            }
+            */
+            
+            return logEntry;
+        } catch (error) {
+            console.error('Error logging access request:', error);
+            return null;
+        }
+    }
+
     // Get patients accessible to a specific provider
     async getPatientsForProvider(providerId) {
         const { data, error } = await supabase
