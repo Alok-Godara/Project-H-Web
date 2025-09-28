@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import authService from "./supabase/auth";
+import DataServices from "./supabase/dataConfig";
 import { Outlet } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { login, logout } from "./store/authSlice";
@@ -27,8 +28,32 @@ function App() {
         }
 
         if (user) {
-          dispatch(login({ user }));
-          navigate("/dashboard");
+          // Check if user exists in providers table
+          try {
+            const providerData = await DataServices.getProviderById(user.id);
+            if (providerData) {
+              dispatch(login({ user, provider: providerData }));
+              localStorage.setItem('user', JSON.stringify(user));
+              localStorage.setItem('provider', JSON.stringify(providerData));
+              navigate("/dashboard");
+            } else {
+              // User authenticated but not in providers table - logout
+              console.log('User not found in providers table during app initialization');
+              await authService.logoutService();
+              dispatch(logout());
+              localStorage.removeItem('user');
+              localStorage.removeItem('provider');
+              navigate("/login");
+            }
+          } catch (error) {
+            // Error fetching provider data - treat as unauthorized
+            console.error('Error fetching provider data:', error);
+            await authService.logoutService();
+            dispatch(logout());
+            localStorage.removeItem('user');
+            localStorage.removeItem('provider');
+            navigate("/login");
+          }
         } else {
           dispatch(logout());
           navigate("/login");

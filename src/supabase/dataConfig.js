@@ -109,6 +109,105 @@ class DataServicesClass {
         return data;
     }
 
+    // Update provider profile information
+    async updateProviderProfile(providerId, profileData) {
+        try {
+            // If email is being changed, update Supabase auth email as well
+            if (profileData.email) {
+                const currentProvider = await this.getProviderById(providerId);
+                if (currentProvider && currentProvider.email !== profileData.email) {
+                    console.log('Updating email in Supabase auth...');
+                    const { error: emailUpdateError } = await supabase.auth.updateUser({
+                        email: profileData.email
+                    });
+                    
+                    if (emailUpdateError) {
+                        console.error('Failed to update email in auth:', emailUpdateError);
+                        // Continue with profile update even if auth email update fails
+                    }
+                }
+            }
+
+            // Update provider profile in database
+            const { data, error } = await supabase
+                .from('providers')
+                .update({
+                    name: profileData.name,
+                    email: profileData.email,
+                    phone: profileData.phone,
+                    specialty: profileData.specialty,
+                    license_number: profileData.licenseNumber,
+                    updated_at: new Date().toISOString()
+                })
+                .eq('id', providerId)
+                .select()
+                .single();
+            
+            if (error) throw error;
+            return data;
+        } catch (error) {
+            console.error('Provider profile update error:', error);
+            throw error;
+        }
+    }
+
+    // Update provider password (requires current password verification)
+    async updateProviderPassword(providerId, currentPassword, newPassword) {
+        try {
+            // First verify the current password by attempting to sign in
+            const provider = await this.getProviderById(providerId);
+            if (!provider) {
+                throw new Error('Provider not found');
+            }
+
+            // Use Supabase auth to verify current password
+            const { error: signInError } = await supabase.auth.signInWithPassword({
+                email: provider.email,
+                password: currentPassword
+            });
+
+            if (signInError) {
+                throw new Error('Current password is incorrect');
+            }
+
+            // Update the password in Supabase auth
+            const { data, error } = await supabase.auth.updateUser({
+                password: newPassword
+            });
+
+            if (error) throw error;
+
+            // Update the password in providers table as well
+            const { error: updateError } = await supabase
+                .from('providers')
+                .update({
+                    password: newPassword,
+                    updated_at: new Date().toISOString()
+                })
+                .eq('id', providerId);
+
+            if (updateError) {
+                console.warn('Failed to update password in providers table:', updateError);
+            }
+
+            return { success: true, user: data.user };
+        } catch (error) {
+            console.error('Password update error:', error);
+            throw error;
+        }
+    }
+
+    // Get provider profile with error handling and fallback
+    async getProviderProfileSafely(providerId) {
+        try {
+            const provider = await this.getProviderById(providerId);
+            return { provider, error: null };
+        } catch (error) {
+            console.error('Failed to fetch provider profile:', error);
+            return { provider: null, error: error.message };
+        }
+    }
+
     // Get patients accessible to a specific provider
     async getPatientsForProvider(providerId) {
         const { data, error } = await supabase

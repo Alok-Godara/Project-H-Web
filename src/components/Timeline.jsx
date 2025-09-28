@@ -124,7 +124,7 @@ const Timeline = ({ patient, selectedEvent, onEventSelect }) => {
               {patient.name}
             </h2>
             <p className="text-gray-600">
-              {patient.age}y {patient.sex} • ID: {patient.id}
+              {patient.age} {patient.sex} • ID: {patient.id}
             </p>
           </div>
 

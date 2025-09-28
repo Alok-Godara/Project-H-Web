@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
 import { Activity, ArrowLeft, Eye, EyeOff, Mail, Lock } from 'lucide-react';
 import authService from '../supabase/auth';
+import { login } from '../store/authSlice';
 
 
 const LoginPage = () => {
@@ -9,10 +11,10 @@ const LoginPage = () => {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState({});
-
   const [isLoading, setIsLoading] = useState(false);
 
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
   const validateForm = () => {
     const newErrors = {};
@@ -39,12 +41,49 @@ const LoginPage = () => {
     if (!validateForm()) return;
 
     setIsLoading(true);
+    setErrors({}); // Clear previous errors
 
     try {
-      await authService.loginService(email, password);
-      navigate("/dashboard");
+      // Call authService with correct parameters (object format)
+      const result = await authService.loginService({ email, password });
+      
+      if (result.error) {
+        // Handle Supabase authentication errors
+        console.error('Login error:', result.error);
+        setErrors({ 
+          password: result.error.message || 'Invalid email or password' 
+        });
+        return;
+      }
+
+      if (result.user && result.provider) {
+        // Success: user is authenticated and exists in providers table
+        dispatch(login({ user: result.user, provider: result.provider }));
+        
+        // Store user and provider data in localStorage for persistence
+        localStorage.setItem('user', JSON.stringify(result.user));
+        localStorage.setItem('provider', JSON.stringify(result.provider));
+        
+        console.log('Login successful and provider verified:', result.user);
+        
+        // Navigate to dashboard
+        navigate("/dashboard");
+      } else {
+        // User authenticated but not found in providers table (already logged out in auth service)
+        console.log('Access denied - user not authorized as provider');
+        setErrors({ 
+          password: 'Access denied. You are not authorized to access this system.' 
+        });
+        // Clear any potential stored data
+        localStorage.removeItem('user');
+        localStorage.removeItem('provider');
+      }
+      
     } catch (error) {
-      setErrors({ password: 'Invalid email or password', error });
+      console.error('Login error:', error);
+      setErrors({ 
+        password: 'An unexpected error occurred. Please try again.' 
+      });
     } finally {
       setIsLoading(false);
     }

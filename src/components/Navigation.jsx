@@ -8,8 +8,15 @@ import {
 } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { logout } from "../store/authSlice";
+import authService from "../supabase/auth";
 
 const Navigation = () => {
+  const dispatch = useDispatch();
+  const { user } = useSelector((state) => state.auth);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  
   const [provider, setProvider] = useState({
     id: "provider-1",
     name: "Dr. John Doe",
@@ -17,14 +24,42 @@ const Navigation = () => {
   });
 
   useEffect(() => {
-    // code for getting provider
-    const provider = {
-      id: "provider-2",
-      name: "Dr. Doe",
-      specialty: "Lodalogy",
+    // Get provider information from database based on current user
+    const fetchProviderData = async () => {
+      try {
+        // If we have a user from Redux store, get their provider details
+        if (user?.id) {
+          // You can use DataServices.getProviderById(user.id) here
+          // For now, using mock data but structure is ready for real data
+          const providerData = {
+            id: user.id,
+            name: user.user_metadata?.name || "Dr. User",
+            specialty: "General Practice", // This would come from database
+          };
+          setProvider(providerData);
+        } else {
+          // Fallback to mock data if no user in store
+          const mockProvider = {
+            id: "provider-2",
+            name: "Dr. Doe",
+            specialty: "Cardiology",
+          };
+          setProvider(mockProvider);
+        }
+      } catch (error) {
+        console.error('Error fetching provider data:', error);
+        // Use fallback data on error
+        const fallbackProvider = {
+          id: "provider-1",
+          name: "Dr. Unknown",
+          specialty: "General Practice",
+        };
+        setProvider(fallbackProvider);
+      }
     };
-    setProvider(provider);
-  }, []);
+
+    fetchProviderData();
+  }, [user]); // Re-run when user changes
 
   const { patientId } = useParams();
 
@@ -46,8 +81,45 @@ const Navigation = () => {
     navigate("/dashboard");
   };
 
-  const handleLogout = () => {
-    // code for logging out
+  const handleLogout = async () => {
+    if (isLoggingOut) return; // Prevent multiple logout attempts
+    
+    setIsLoggingOut(true);
+    
+    try {
+      // Logout from Supabase
+      const result = await authService.logoutService();
+      
+      if (result) {
+        // Clear Redux store
+        dispatch(logout());
+        
+        // Clear any local storage if needed
+        localStorage.removeItem('user');
+        localStorage.removeItem('provider');
+        localStorage.removeItem('auth-token');
+        
+        // Navigate to login page
+        navigate('/login');
+        
+        console.log('User logged out successfully');
+      } else {
+        throw new Error('Failed to logout from Supabase');
+      }
+    } catch (error) {
+      console.error('Logout error:', error);
+      
+      // Even if Supabase logout fails, clear local state
+      dispatch(logout());
+      localStorage.removeItem('user');
+      localStorage.removeItem('provider');
+      localStorage.removeItem('auth-token');
+      
+      // Still navigate to login
+      navigate('/login');
+    } finally {
+      setIsLoggingOut(false);
+    }
   };
 
   return (
@@ -114,10 +186,19 @@ const Navigation = () => {
 
             <button
               onClick={handleLogout}
-              className="p-2 text-gray-600 hover:text-red-600 transition-colors"
-              title="Sign Out"
+              disabled={isLoggingOut}
+              className={`p-2 transition-colors ${
+                isLoggingOut 
+                  ? 'text-gray-400 cursor-not-allowed' 
+                  : 'text-gray-600 hover:text-red-600'
+              }`}
+              title={isLoggingOut ? 'Signing out...' : 'Sign Out'}
             >
-              <LogOut size={18} />
+              {isLoggingOut ? (
+                <div className="w-[18px] h-[18px] border-2 border-gray-400 border-t-transparent rounded-full animate-spin"></div>
+              ) : (
+                <LogOut size={18} />
+              )}
             </button>
           </div>
         </div>

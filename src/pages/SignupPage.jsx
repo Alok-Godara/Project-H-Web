@@ -1,7 +1,9 @@
 import React, {  useState } from 'react';
 import { Activity, ArrowLeft, Eye, EyeOff, Mail, Lock, User, Stethoscope } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
 import authService from '../supabase/auth';
+import { login } from '../store/authSlice';
 
 const SignupPage = () => {
   const [formData, setFormData] = useState({
@@ -19,6 +21,7 @@ const SignupPage = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
   const specialties = [
     'Internal Medicine',
@@ -100,18 +103,53 @@ const SignupPage = () => {
     if (!validateForm()) return;
     
     setIsLoading(true);
+    setErrors({}); // Clear previous errors
+    
     try {
-      const {data} = await authService.createAccountService({
+      const result = await authService.createAccountService({
         email: formData.email,
         password: formData.password,
         name: formData.name,
         phone: formData.phone,
         specialty: formData.specialty,
       });
-      console.log(data);
-      navigate("/dashboard");
+      
+      console.log('Signup result:', result);
+      
+      if (result.error) {
+        console.error('Signup error:', result.error);
+        setErrors({ 
+          email: result.error.message || 'An account with this email already exists' 
+        });
+        return;
+      }
+
+      if (result.user) {
+        // Success: dispatch to Redux store with user and provider data
+        dispatch(login({ 
+          user: result.user, 
+          provider: result.provider 
+        }));
+        
+        // Store user and provider data in localStorage for persistence
+        localStorage.setItem('user', JSON.stringify(result.user));
+        if (result.provider) {
+          localStorage.setItem('provider', JSON.stringify(result.provider));
+        }
+        
+        console.log('Signup successful:', result.user);
+        
+        // Navigate to dashboard
+        navigate("/dashboard");
+      } else {
+        setErrors({ email: 'Account creation failed. Please try again.' });
+      }
+      
     } catch (error) {
-      setErrors({ email: 'An account with this email already exists', error });
+      console.error('Signup error:', error);
+      setErrors({ 
+        email: 'An unexpected error occurred. Please try again.' 
+      });
     } finally {
       setIsLoading(false);
     }

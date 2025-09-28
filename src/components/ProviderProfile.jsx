@@ -1,37 +1,33 @@
-import React, {useState } from 'react';
-import { User, Mail, Phone, Stethoscope, FileText, Save, ArrowLeft, Eye, EyeOff } from 'lucide-react';
-import { useSelector } from 'react-redux';
+import React, {useState, useEffect } from 'react';
+import { User, Mail, Phone, Stethoscope, FileText, Save, ArrowLeft, Eye, EyeOff, RefreshCw } from 'lucide-react';
+import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
+import DataServices from '../supabase/dataConfig';
+import { login } from '../store/authSlice';
 
 
 const ProviderProfile = () => {
-
-const onSave = () => {
-    // Handle save logic
-  };
-
   const navigate = useNavigate();
+  const dispatch = useDispatch();
+
+  // Get the logged-in provider details from auth slice
+  const user = useSelector(state => state.auth.user);
+  const provider = useSelector(state => state.auth.provider);
+
+  console.log('User:', user);
+  console.log('Provider:', provider);
 
   const onBack = () => {
     navigate(-1);
   };
 
-  // const [provider, setProvider] = useState("")
-  // Get the logged-in provider details from auth slice
-  const provider = useSelector(state => state.auth.user);
-
-  // useEffect(() => {
-  //   setProvider(provider)
-  // },[])
-
-  console.log(provider);
-
+  // Initialize form data with provider information
   const [formData, setFormData] = useState({
-    name: provider.name,
-    email: provider.email,
-    specialty: provider.specialty,
-    licenseNumber: provider.licenseNumber,
-    phone: provider.phone,
+    name: provider?.name || '',
+    email: provider?.email || user?.email || '',
+    specialty: provider?.specialty || '',
+    licenseNumber: provider?.license_number || '',
+    phone: provider?.phone || '',
     currentPassword: '',
     newPassword: '',
     confirmPassword: ''
@@ -41,8 +37,65 @@ const onSave = () => {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [errors, setErrors] = useState({});
   const [successMessage, setSuccessMessage] = useState('');
+
+  // Refresh provider data from database
+  const refreshProviderData = async () => {
+    if (!provider?.id) return;
+    
+    setIsRefreshing(true);
+    try {
+      const { provider: refreshedProvider, error } = await DataServices.getProviderProfileSafely(provider.id);
+      
+      if (error) {
+        console.error('Failed to refresh provider data:', error);
+        setErrors({ general: 'Failed to refresh data from server' });
+        return;
+      }
+
+      if (refreshedProvider) {
+        // Update Redux store
+        dispatch(login({ user, provider: refreshedProvider }));
+        
+        // Update localStorage
+        localStorage.setItem('provider', JSON.stringify(refreshedProvider));
+        
+        // Update form data with fresh data
+        setFormData(prev => ({
+          ...prev,
+          name: refreshedProvider.name || '',
+          email: refreshedProvider.email || user?.email || '',
+          specialty: refreshedProvider.specialty || '',
+          licenseNumber: refreshedProvider.license_number || '',
+          phone: refreshedProvider.phone || '',
+        }));
+        
+        setSuccessMessage('Provider data refreshed successfully!');
+        setTimeout(() => setSuccessMessage(''), 3000);
+      }
+    } catch (error) {
+      console.error('Error refreshing provider data:', error);
+      setErrors({ general: 'Failed to refresh provider data' });
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
+  // Update form data when provider data changes
+  useEffect(() => {
+    if (provider) {
+      setFormData(prev => ({
+        ...prev,
+        name: provider.name || '',
+        email: provider.email || user?.email || '',
+        specialty: provider.specialty || '',
+        licenseNumber: provider.license_number || '',
+        phone: provider.phone || '',
+      }));
+    }
+  }, [provider, user]);
 
   const specialties = [
     'Internal Medicine',
@@ -112,24 +165,56 @@ const onSave = () => {
     
     if (!validateForm()) return;
     
+    if (!provider?.id) {
+      setErrors({ general: 'Provider information not available. Please log in again.' });
+      return;
+    }
+    
     setIsLoading(true);
     setSuccessMessage('');
+    setErrors({});
     
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // Check if password is being changed
+      const isPasswordChange = formData.currentPassword && formData.newPassword;
       
-      const updatedProvider = {
-        ...provider,
+      // Update profile information
+      console.log('Updating provider profile:', provider.id);
+      const updatedProvider = await DataServices.updateProviderProfile(provider.id, {
         name: formData.name,
         email: formData.email,
         specialty: formData.specialty,
         licenseNumber: formData.licenseNumber,
         phone: formData.phone
-      };
+      });
       
-      onSave(updatedProvider);
-      setSuccessMessage('Profile updated successfully!');
+      console.log('Profile updated successfully:', updatedProvider);
+      
+      // Update password if provided
+      if (isPasswordChange) {
+        console.log('Updating password...');
+        await DataServices.updateProviderPassword(
+          provider.id, 
+          formData.currentPassword, 
+          formData.newPassword
+        );
+        console.log('Password updated successfully');
+      }
+      
+      // Update Redux store with new provider data
+      dispatch(login({ 
+        user: user, 
+        provider: updatedProvider 
+      }));
+      
+      // Update localStorage with new provider data
+      localStorage.setItem('provider', JSON.stringify(updatedProvider));
+      
+      setSuccessMessage(
+        isPasswordChange 
+          ? 'Profile and password updated successfully!' 
+          : 'Profile updated successfully!'
+      );
       
       // Clear password fields
       setFormData(prev => ({
@@ -140,7 +225,20 @@ const onSave = () => {
       }));
       
     } catch (error) {
-      setErrors({ general: 'Failed to update profile. Please try again.', error });
+      console.error('Profile update error:', error);
+      
+      // Handle specific error cases
+      if (error.message === 'Current password is incorrect') {
+        setErrors({ currentPassword: 'Current password is incorrect' });
+      } else if (error.message === 'Provider not found') {
+        setErrors({ general: 'Provider account not found. Please contact support.' });
+      } else if (error.message && error.message.includes('email')) {
+        setErrors({ email: 'Email address is already in use by another account' });
+      } else {
+        setErrors({ 
+          general: error.message || 'Failed to update profile. Please try again.' 
+        });
+      }
     } finally {
       setIsLoading(false);
     }
@@ -155,6 +253,18 @@ const onSave = () => {
       setSuccessMessage('');
     }
   };
+
+  // Show loading state if provider data is not available
+  if (!provider) {
+    return (
+      <div className="min-h-[calc(100vh-4rem)] bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading provider information...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-[calc(100vh-4rem)] bg-gradient-to-br from-blue-50 via-white to-indigo-50 relative overflow-hidden">
@@ -184,7 +294,17 @@ const onSave = () => {
             </button>
             
             <div className="text-center">
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">Provider Profile</h1>
+              <div className="flex items-center justify-center space-x-4 mb-2">
+                <h1 className="text-3xl font-bold text-gray-900">Provider Profile</h1>
+                <button
+                  onClick={refreshProviderData}
+                  disabled={isRefreshing}
+                  className="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors disabled:opacity-50"
+                  title="Refresh provider data"
+                >
+                  <RefreshCw size={20} className={isRefreshing ? 'animate-spin' : ''} />
+                </button>
+              </div>
               <p className="text-gray-600">Manage your professional information and account settings</p>
             </div>
           </div>
